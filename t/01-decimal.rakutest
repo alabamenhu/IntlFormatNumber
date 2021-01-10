@@ -1,0 +1,33 @@
+use Test;
+
+use Intl::Format::Number;
+
+# Tolerance must be set here, or else failures may occur when we try to read it
+# 1e-15 is the default, so for the first sets we match it
+my $*TOLERANCE = 1e-15;
+
+# Default format, integral numbers
+is format-number(1234567890, :language<en>), '1,234,567,890';
+is format-number(1234567890, :language<es>), '1.234.567.890';
+is format-number(1234567890, :language<ar>), '١٬٢٣٤٬٥٦٧٬٨٩٠';
+is format-number(1234567890, :language<hi>), '1,23,45,67,890';
+is format-number(1234567890, :language<fi>), '1 234 567 890';
+
+# Default format, with fractional components
+is format-number(1.23456789, :language<en>), '1.23456789';
+is format-number(1.23456789, :language<es>), '1,23456789';
+is format-number(1.23456789, :language<ar>), '١٫٢٣٤٥٦٧٨٩';
+is format-number(1.23456789, :language<hi>), '1.23456789';
+is format-number(1.23456789, :language<fi>), '1,23456789';
+
+# Rat number
+is format-number(1/3, :language<en>), '0.333333333333333';
+is format-number(1/2, :language<en>), '0.5';
+
+# Adjusting limit
+$*TOLERANCE = .0001; # effectively makes max-frac-digits to 4
+is format-number(1/3, :language<en>), '0.3333';
+$*TOLERANCE = .000000000000000000000000001; # effectively makes max-frac-digits to 27
+is format-number(1/3, :language<en>), '0.333333333333333333333333333';
+
+done-testing;

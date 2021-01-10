@@ -1,0 +1,27 @@
+{
+  "name": "IntlFormatNumber",
+  "description": "A module for formatting numbers in a localized manner",
+  "version": "0.1",
+  "perl": "6.*",
+  "raku": "6.*",
+  "authors": [
+    "Matthew Stephen Stuckwisch"
+  ],
+  "auth": "github:alabamenhu",
+  "depends": ["Intl::CLDR", "Intl::UserLanguage"],
+  "build-depends": [],
+  "test-depends": ["Test"],
+  "provides": {
+    "Intl::Format::Util::Digits": "lib/Intl/Format/Util/Digits.pm6",
+    "Intl::Format::Number": "lib/Intl/Format/Number.pm6"
+  },
+  "resources": [],
+  "license": "Artistic-2.0",
+  "source-url": "git://github.com/alabamenhu/IntlFormatNumber.git",
+  "tags": [
+    "formatting",
+    "international",
+    "localization",
+    "numbers"
+  ]
+}
