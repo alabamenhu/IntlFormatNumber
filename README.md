@@ -1,4 +1,4 @@
-# IntlFormatNumber
+# Intl::Format::Number
 A module for formatting numbers in a localized manner
 
 To use, simply say
@@ -24,5 +24,5 @@ Performance is about an order of magnitude slower than `.Str`, but an order of m
     * Initial version
 
 ## License and Copyright
-© 2020 Matthew Stephen Stuckwisch.
+© 2020-2021 Matthew Stephen Stuckwisch.
 Licensed under the Artistic License 2.0.
