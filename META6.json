@@ -1,7 +1,7 @@
 {
-  "name": "IntlFormatNumber",
+  "name": "Intl::Format::Number",
   "description": "A module for formatting numbers in a localized manner",
-  "version": "0.1",
+  "version": "0.1.0",
   "perl": "6.*",
   "raku": "6.*",
   "authors": [
