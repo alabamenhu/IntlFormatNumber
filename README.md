@@ -20,6 +20,8 @@ Performance is about an order of magnitude slower than `.Str`, but an order of m
 
 ## Version history
 
+  * **v0.1.1**
+    * Fix bug for n = 0, n = 10ˣ, and n < 0
   * **v0.1.0**
     * Initial version
 
