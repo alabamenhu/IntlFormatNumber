@@ -3,7 +3,7 @@
 use Intl::Format::Number;
 my $time;
 
-#`<<<
+#
 my @nums;
 @nums.push: floor 1000000000.rand for ^50;
 say @nums;
@@ -19,7 +19,7 @@ say "Done in {now - $time}";
 $time = now;
 $b ~= @nums.roll for ^1000;
 say "Done in {now - $time}";
->>>
+
 my $time2;
 
 $time = now;
