@@ -20,6 +20,27 @@ is format-number(1.23456789, :language<ar>), '١٫٢٣٤٥٦٧٨٩';
 is format-number(1.23456789, :language<hi>), '1.23456789';
 is format-number(1.23456789, :language<fi>), '1,23456789';
 
+# Evil 0 (can't use log10 to count the integral digits)
+is format-number(0, :language<en>), '0';
+is format-number(0, :language<es>), '0';
+is format-number(0, :language<ar>), '٠';
+is format-number(0, :language<hi>), '0';
+is format-number(0, :language<fi>), '0';
+
+# Default format, negative integral numbers
+is format-number(-1234567890, :language<en>), '-1,234,567,890';
+is format-number(-1234567890, :language<es>), '-1.234.567.890';
+is format-number(-1234567890, :language<ar>), '؜-١٬٢٣٤٬٥٦٧٬٨٩٠';
+is format-number(-1234567890, :language<hi>), '-1,23,45,67,890';
+is format-number(-1234567890, :language<fi>), '−1 234 567 890'; # Finish - is U+2212
+
+# Default format, with fractional components
+is format-number(-1.23456789, :language<en>), '-1.23456789';
+is format-number(-1.23456789, :language<es>), '-1,23456789';
+is format-number(-1.23456789, :language<ar>), '؜-١٫٢٣٤٥٦٧٨٩';
+is format-number(-1.23456789, :language<hi>), '-1.23456789';
+is format-number(-1.23456789, :language<fi>), '−1,23456789'; # Finish - is U+2212
+
 # Rat number
 is format-number(1/3, :language<en>), '0.333333333333333';
 is format-number(1/2, :language<en>), '0.5';
