@@ -69,8 +69,9 @@ sub get-number-formatter(
 
     # FIND-POWER
     #   - determines the initial number of digits we'll have
+    #     (note that log10(0) is -Inf, which can't be made native
     $code ~= qq:to/FIND-POWER/;
-            my int \$power = ceiling log10 \$n;
+            my int \$power = \$n == 0 ?? 1 !! 1 + floor log10 \$n;
             \$power max= {$min-int-digits};
         FIND-POWER
 
@@ -115,6 +116,14 @@ sub get-number-formatter(
             }
         INTEGER-FOOTER
 
+    # INTEGER-FOOTER
+    #   - adds the digit
+    unless $show-sign == never {
+        $code ~= qq:to/SIGN/;
+                \$result = (\$number < 0 ?? {$symbols.minus.raku} !! {($show-sign == always ?? $symbols.plus !! '').raku }) ~ \$result;
+            SIGN
+    }
+
     # SET-UP-FRACTION
     #   - isolate fractional component
     #   - because $max-frac-digits == Inf could be infinite look (1/3), use $*TOLERANCE to cut off
@@ -136,7 +145,9 @@ sub get-number-formatter(
     }
 
     if $min-frac-digits > 0 || $max-frac-digits > 0 {
-        $code ~= 'if $n > $limit {'
+        $code ~= qq:to/FRACTION-HEADER/;
+            if \$n > \$limit \{
+        FRACTION-HEADER
     }
 
     # FORCE-FRACTION
