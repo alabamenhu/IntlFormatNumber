@@ -1,0 +1,6 @@
+use Test;
+use Intl::Format::NumberOld;
+
+say format-number 45678.232, :language<ar>;
+
+done-testing;

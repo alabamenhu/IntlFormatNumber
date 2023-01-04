@@ -1,0 +1,21 @@
+use v6.d;
+use Test;
+use Intl::Format::Number :ast;
+
+use experimental :rakuast;
+
+
+use MONKEY-SEE-NO-EVAL;
+my $foo = EVAL format-number-rakuast('en','decimal','standard');
+is $foo(NaN), 'NaN';
+is $foo(Inf), '∞';
+is $foo(Inf, :show-sign<always>), '+∞';
+is $foo(-Inf), '-∞';
+is $foo(-Inf, :show-sign<never>), '∞';
+
+is $foo(2), '2';
+is $foo(200002, :maximum-integer-digits(2)), '2';
+is $foo(200002), '200002';
+is $foo(-2), '2';
+
+done-testing;

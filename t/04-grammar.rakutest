@@ -1,0 +1,11 @@
+use v6.d;
+use Test;
+use Intl::Format::Number::Grammar;
+use Intl::Format::Number::Actions;
+
+
+
+
+say Grammar.parse("7,890.321;abd#def", :actions(Actions)).made;
+
+done-testing;

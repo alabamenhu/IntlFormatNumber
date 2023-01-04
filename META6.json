@@ -3,25 +3,33 @@
   "description": "A module for formatting numbers in a localized manner",
   "version": "0.1.1",
   "perl": "6.*",
-  "raku": "6.*",
   "authors": [
     "Matthew Stephen Stuckwisch"
   ],
-  "auth": "github:alabamenhu",
-  "depends": ["Intl::CLDR", "Intl::UserLanguage"],
+  "auth": "fez:guifa",
+  "depends": [
+    "Intl::CLDR:auth<fez:guifa>:ver<0.7.2+>",
+    "User::Language:auth<fez:guifa>:ver<0.3.1+>"
+  ],
   "build-depends": [],
-  "test-depends": ["Test"],
+  "test-depends": [
+    "Test"
+  ],
   "provides": {
+    "Intl::Format::Number::Actions": "lib/Intl/Format/Number/Actions.rakumod",
+    "Intl::Format::Number::Grammar": "lib/Intl/Format/Number/Grammar.rakumod",
+    "Intl::Format::NumberOld": "lib/Intl/Format/NumberOld.pm6",
     "Intl::Format::Util::Digits": "lib/Intl/Format/Util/Digits.pm6",
-    "Intl::Format::Number": "lib/Intl/Format/Number.pm6"
+    "Intl::Format::Util::DigitsRAST": "lib/Intl/Format/Util/DigitsRAST.rakumod"
   },
   "resources": [],
   "license": "Artistic-2.0",
-  "source-url": "git://github.com/alabamenhu/IntlFormatNumber.git",
   "tags": [
     "formatting",
     "international",
     "localization",
     "numbers"
-  ]
+  ],
+  "source-url": "git://github.com/alabamenhu/IntlFormatNumber.git",
+  "raku": "6.*"
 }
