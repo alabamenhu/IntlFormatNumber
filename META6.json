@@ -1,7 +1,7 @@
 {
   "name": "Intl::Format::Number",
   "description": "A module for formatting numbers in a localized manner",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "perl": "6.*",
   "authors": [
     "Matthew Stephen Stuckwisch"
@@ -16,11 +16,11 @@
     "Test"
   ],
   "provides": {
+    "Intl::Format::Number": "lib/Intl/Format/Number.rakumod",
     "Intl::Format::Number::Actions": "lib/Intl/Format/Number/Actions.rakumod",
     "Intl::Format::Number::Grammar": "lib/Intl/Format/Number/Grammar.rakumod",
     "Intl::Format::NumberOld": "lib/Intl/Format/NumberOld.pm6",
-    "Intl::Format::Util::Digits": "lib/Intl/Format/Util/Digits.pm6",
-    "Intl::Format::Util::DigitsRAST": "lib/Intl/Format/Util/DigitsRAST.rakumod"
+    "Intl::Format::Util::Digits": "lib/Intl/Format/Util/Digits.pm6"
   },
   "resources": [],
   "license": "Artistic-2.0",
