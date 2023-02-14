@@ -6,7 +6,7 @@
   "authors": [
     "Matthew Stephen Stuckwisch"
   ],
-  "auth": "fez:guifa",
+  "auth": "zef:guifa",
   "depends": [
     "Intl::CLDR:auth<zef:guifa>:ver<0.7.2+>",
     "User::Language:auth<zef:guifa>:ver<0.3.1+>"
