@@ -8,8 +8,8 @@
   ],
   "auth": "fez:guifa",
   "depends": [
-    "Intl::CLDR:auth<fez:guifa>:ver<0.7.2+>",
-    "User::Language:auth<fez:guifa>:ver<0.3.1+>"
+    "Intl::CLDR:auth<zef:guifa>:ver<0.7.2+>",
+    "User::Language:auth<zef:guifa>:ver<0.3.1+>"
   ],
   "build-depends": [],
   "test-depends": [
