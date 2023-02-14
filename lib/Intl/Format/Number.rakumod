@@ -36,7 +36,6 @@ sub format-number-rakuast($language, $type, $length) is export(:ast) {
     my $num-sys := numbers.numbering-systems.default;                      #= The number system being used
     my $symbols := numbers.symbols{$num-sys};                              #= Symbols data, in hash-y format
     my $pattern := numbers{$type ~ "-formats"}{$num-sys}{$length}.pattern; #= Pattern data pre-parsing
-    say "Pattern: $pattern";
     my %format  := Grammar.parse($pattern).made;                           #= Pattern data post-parsing
 
 
