@@ -1,6 +1,6 @@
 use Test;
-use Intl::Format::NumberOld;
+use Intl::Format::Number;
 
-say format-number 45678.232, :language<ar>;
+is format-number(45678.232, :language<ar>), '٤٥٬٦٧٨٫٢٣٢', 'Eastern Arabic digits are properly used';
 
 done-testing;
