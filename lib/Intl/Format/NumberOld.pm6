@@ -1,5 +1,5 @@
 unit module Number;
-use Intl::UserLanguage;
+use User::Language;
 use Intl::CLDR;
 use Intl::Format::Util::Digits;
 

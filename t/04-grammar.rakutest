@@ -1,0 +1,124 @@
+use v6.d;
+use Test;
+use Intl::Format::Number::Grammar;
+
+subtest {
+    for ^10 {
+        my $pattern = '#' ~ ('0' x $_) ~ '.#';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><minimum-integer-digits>, $_, "$_..∞ integer digits";
+    }
+}, 'Count of minimum integer digits is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = '#' ~ ('@' x $_) ~ '.';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><minimum-significant-digits>, $_, "Exactly $_ significant digits";
+    }
+}, 'Count of minimum significant digits is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = '#.' ~ ('0' x $_) ~ '#';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><minimum-fractional-digits>, $_, "$_..∞ fractional digits";
+    }
+}, 'Count of minimum fractional digits is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = '#@' ~ ('#' x $_) ~ '.';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><maximum-significant-digits>, $_ + 1, "1..{1+$_} significant digits";
+    }
+}, 'Count of maximum significant digits is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = '#,' ~ ('#' x $_) ~ '.#';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><primary-grouping-size>, $_, "$_ primary grouping digits";
+    }
+}, 'Count of primary grouping size is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = '#,#' ~ ('#' x $_) ~ ',#.#';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><secondary-grouping-size>, $_ + 1, "{$_+1} secondary grouping digits";
+    }
+}, 'Secondary grouping size is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = '#.#' ~ ('#' x $_) ~ ',#';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><fractional-grouping-size>, $_ + 1, "{$_+1} fractional grouping digits";
+    }
+}, 'Fractional grouping size is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = ('#' x $_) ~ '#.E0';
+        my %pattern = Grammar.parse($pattern).made;
+        is %pattern<positive><exponential-power-multiple>, $_ + 1, "{$_+1} exponential power grouping digits";
+    }
+}, 'Exponential power multiple is correct';
+
+subtest {
+        is Grammar.parse('#.E0' ).made<positive><exponential-forces-sign>, False, 'No forced exponential power sign';
+        is Grammar.parse('#.E+0').made<positive><exponential-forces-sign>, True,     'Forced exponential power sign';
+}, 'Forced exponential power sign correctly detected';
+
+subtest {
+    for ^10 {
+        my $pattern = 'abcdefghij'.substr(0,$_) ~ '#.#';
+        my %pattern = Grammar.parse($pattern).made;
+        if $_ == 0 {
+            ok (%pattern<positive><prefix> == 0), 'Lack of prefix correctly detected';
+        } else {
+            ok (%pattern<positive><prefix> == 1
+            &&  %pattern<positive><prefix>[0]<type> eq 'text'
+            &&  %pattern<positive><prefix>[0]<text> eq 'abcdefghij'.substr(0,$_)
+            ), "Literal prefix length $_ correctly detected";
+        }
+    }
+}, 'Literal prefix is correct';
+
+subtest {
+    for ^10 {
+        my $pattern = '#.#' ~ 'abcdefghij'.substr(0,$_);
+        my %pattern = Grammar.parse($pattern).made;
+        if $_ == 0 {
+            ok (%pattern<positive><suffix> == 0), 'Lack of suffix correctly detected';
+        } else {
+            ok (%pattern<positive><suffix> == 1
+            &&  %pattern<positive><suffix>[0]<type> eq 'text'
+            &&  %pattern<positive><suffix>[0]<text> eq 'abcdefghij'.substr(0,$_)
+            ), "Literal suffix length $_ correctly detected";
+        }
+    }
+}, 'Literal suffix is correct';
+
+subtest {
+    my %positions =
+        start  => '↔prefix#.#suffix',
+        before => 'prefix↔#.#suffix',
+        after  => 'prefix#.#↔suffix',
+        end    => 'prefix#.#suffix↔';
+    for %positions.kv -> $type, $template {
+        for ('a', ' ', '…', '🙂') -> $char {
+            my  $pattern = $template.subst('↔',"*$char");
+            my  %pattern = Grammar.parse($pattern).made;
+            ok (%pattern<positive><padding-type> eq $type
+            &&  %pattern<positive><padding-char> eq $char
+            ), "Padding $type/'$char' correctly detected"
+        }
+    }
+}
+
+# TODO: Negative tests
+# TODO: Replacement characters in prefix/suffix
+
+done-testing;
