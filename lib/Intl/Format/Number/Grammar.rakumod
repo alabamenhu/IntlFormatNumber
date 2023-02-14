@@ -8,7 +8,9 @@ unit grammar Grammar;
 # and some number of digits.
 
 # TOP is a dummy rule -- called only to set up dynamic variables
-# that both grammar and actions need to have access to
+# If someone else wishes to use the grammar, they may want to
+# implement the full set of actions methods.  All data here is
+# created within the grammar, and stored into %*data
 token TOP {
     :my %*data =
         negative-type => 'simple',
@@ -18,8 +20,8 @@ token TOP {
             minimum-fractional-digits  => 0,
             minimum-exponential-digits => 0,
             minimum-significant-digits => 0,
-           #maximum-integer-digits     => ∞, (not definable in patterns)
-           #maximum-fractional-digits  => ∞, (not definable in patterns)
+#           maximum-integer-digits     => ∞, (not definable in patterns)
+#           maximum-fractional-digits  => ∞, (not definable in patterns)
             maximum-significant-digits => 0,
             primary-grouping-size      => 0,
             secondary-grouping-size    => 0,
@@ -38,8 +40,8 @@ token TOP {
             minimum-fractional-digits  => 0,
             minimum-exponential-digits => 0,
             minimum-significant-digits => 0,
-           #maximum-integer-digits     => ∞, (not definable in patterns)
-           #maximum-fractional-digits  => ∞, (not definable in patterns)
+#           maximum-integer-digits     => ∞, (not definable in patterns)
+#           maximum-fractional-digits  => ∞, (not definable in patterns)
             maximum-significant-digits => 0,
             primary-grouping-size      => 0,
             secondary-grouping-size    => 0,
@@ -54,6 +56,7 @@ token TOP {
         ),
     ;
     <patterns>
+    { make %*data }
 }
 
 # If only one token is given, the negative is identical to the positive,
@@ -123,7 +126,6 @@ token pattern-element:number {
     | '@' <.significant-digit> [',' <.fractional-grouping> ]?
     | <fractional-digit>       [',' <.fractional-grouping> ]?
     ]*
-    { %*d<fractional-grouping-size> = $*grouping}
 
     [
         'E' # if exponential
@@ -171,25 +173,34 @@ method integer-grouping {
 }
 
 method handle-grouping {
-    # Per the standard, only the final two group sizes are used. For simplicity of implementation,
-    # we just capture all of them, and then choose the last two.
-    # 0 will be treated as "no groupings" and result in the group code not being inserted
-    if @*grouping > 1 {
+    # Per the standard, only the final two group sizes are used.
+    # For simplicity of implementation, we just capture all of them,
+    #   and then choose the last two, assuming there at least two
+    # Having a single element (added here because no commas at all)
+    #   will be treated as "no groupings" and result in the group
+    #   code not being inserted.
+    @*grouping.push: $*grouping;
+    $*grouping = 0;
+
+    if @*grouping > 2 {
         (%*d<secondary-grouping-size>, %*d<primary-grouping-size>) = @*grouping.tail(2);
-    }elsif @*grouping == 1 {
+    } elsif @*grouping == 2 {
         %*d<primary-grouping-size>   = @*grouping.tail;
         %*d<secondary-grouping-size> = @*grouping.tail;
     }
-    $*grouping = 0;
     self;
 }
 method handle-integral-digit($digit) {
     %*d<rounding-value> = %*d<rounding-value> * 10 + $digit;
+    %*d<minimum-integer-digits>++;
+    $*grouping++;
     self
 }
 method handle-fractional-digit($digit) {
     %*d<rounding-value> = %*d<rounding-value> + $*fractional-multiplier * $digit;
     $*fractional-multiplier /= 10;
+    %*d<minimum-fractional-digits>++;
+    $*grouping++;
     self
 }
 method fractional-grouping {
@@ -202,10 +213,10 @@ method fractional-grouping {
 }
 
 token padding($position){
-    '*' <(.)>
+    '*' <(.
     {
         %*d<padding-char> = $/.Str;
-        %*d<padding-type> = $position
+        %*d<padding-type> = $position;
     }
 }
 # the docs say the pad character can be anything, and that
