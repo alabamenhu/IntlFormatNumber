@@ -10,10 +10,13 @@ multi sub format-number (
 ) is export {
     my $code = $language ~ $type ~ $length;
     state %cache;
-    my &formatter  = %cache{$code}
-                  // %cache{$code} = get-number-formatter($language, $type, $length);
+    my $formatter = %cache{$code};
+    unless $formatter {
+        $formatter = get-number-formatter($language, $type, $length);
+        %cache{$code} = $formatter;
+    }
 
-    return formatter $number;
+    return $formatter($number);
 }
 
 constant Op_NumEq   = RakuAST::Infix.new('==');
@@ -22,10 +25,11 @@ constant Var_N      = RakuAST::Var::Lexical.new('$n');
 constant Var_Result = RakuAST::Var::Lexical.new('$result');
 constant Var_Digs   = RakuAST::Var::Lexical.new('@digits');
 
-
-sub format-number-rakuast($language, $type, $length) is export(:ast) {
+use Intl::LanguageTag:auth<zef:guifa>:ver<0.12.1+>;
+sub format-number-rakuast(LanguageTag() $language, $type, $length) is export(:ast) {
+    say "creating formatter for $language $type $length";
+    use Intl::CLDR:auth<zef:guifa>:ver<0.7.4+>;
     use Intl::Format::Util::Digits;
-    use Intl::CLDR;
     use Intl::Format::Number::Grammar;
     use Intl::Format::Number::Actions;
     use experimental :rakuast;
@@ -33,10 +37,14 @@ sub format-number-rakuast($language, $type, $length) is export(:ast) {
 
     # Grab initial data.
     my \numbers  = cldr{$language}.numbers;
-    my $num-sys := numbers.numbering-systems.default;                      #= The number system being used
-    my $symbols := numbers.symbols{$num-sys};                              #= Symbols data, in hash-y format
-    my $pattern := numbers{$type ~ "-formats"}{$num-sys}{$length}.pattern; #= Pattern data pre-parsing
-    my %format  := Grammar.parse($pattern).made;                           #= Pattern data post-parsing
+    say $language.extensions<u><nu> || "!!***!!!";
+    my $num-sys := $language.extensions<u><nu>         #= The number system being used
+                || numbers.numbering-systems.default;
+    my $symbols := numbers.symbols{$num-sys};          #= Symbols data, in hash-y format
+    my $pattern := $type ne 'permille'                 #= Pattern data pre-parsing
+                ?? numbers{$type ~ '-formats'}{$num-sys}{$length}.pattern
+                !! numbers<percent-formats>{$num-sys}{$length}.pattern.subst('%','‰');
+    my %format  := Grammar.parse($pattern).made;       #= Pattern data post-parsing
 
 
     #——————————————————
@@ -109,6 +117,7 @@ sub format-number-rakuast($language, $type, $length) is export(:ast) {
         $result-declare,   # $result = '';
         $digits-declare,   # @digits = 0,1,2...
         rast-abs-n,
+        rast-percent($type),
         rast-number(%format, $symbols),
         $prefix,
         $suffix,
@@ -246,9 +255,9 @@ sub rast-text(@fix, \symbols, :$auto-negative = False) {
         if .<type> eq 'text' {
             $str ~= .<text>
         } elsif .<symb> eq 'percent' {
-            $str.push: RakuAST::StrLiteral.new(symbols.percent)
+            @strs.push: RakuAST::StrLiteral.new(symbols.percent)
         } elsif .<symb> eq 'permille' {
-            $str.push: RakuAST::StrLiteral.new(symbols.permille)
+            @strs.push: RakuAST::StrLiteral.new(symbols.permille)
         } else #`[ .<symb> eq 'minus'] {
             # Push current string
             @strs.push: RakuAST::StrLiteral.new($str);
@@ -932,4 +941,38 @@ sub rast-fract-inner-loop is pure {
             )
         ),
     ),
+}
+
+sub rast-percent($type) {
+    if $type eq 'percent' || $type eq 'permille' {
+        return RakuAST::Statement::Expression.new(
+            expression => RakuAST::ApplyInfix.new(
+                left => Var_N,
+                infix => Op_Asgn,
+                right => RakuAST::ApplyInfix.new(
+                    left => Var_N,
+                    infix => RakuAST::Infix.new('*'),
+                    right => RakuAST::IntLiteral.new($type eq 'percent' ?? 100 !! 1000)
+                )
+            )
+        )
+    }
+
+    return Empty
+}
+
+
+sub rast-exponential(\symbols) {
+    RakuAST::Statement::Expression.new(
+        expression => RakuAST::ApplyInfix.new(
+            left => Var_Result,
+            infix => Op_Asgn,
+            right => RakuAST::ApplyInfix.new(
+                left => Var_Result,
+                infix => RakuAST::Infix.new('~'),
+                right => RakuAST::StrLiteral.new(symbols.exponential)
+            )
+        )
+    ),
+
 }
