@@ -65,6 +65,14 @@ token patterns {
     :my %*d := %*data<positive>;
     $<positive>=<pattern>
     [
+        # TODO: Per TR 35, no need to fully parse the negative pattern, just its prefix/suffix
+        # <http://unicode.org/reports/tr35/tr35-numbers.html#32-special-pattern-characters>
+        # If there is an explicit negative subpattern, it serves only to specify
+        # the negative prefix and suffix; the number of digits, minimal digits, and
+        # other characteristics are ignored in the negative subpattern. That means
+        # that "#,##0.0#;(#)" has precisely the same result as "#,##0.0#;(#,##0.0#)".
+        # However in the CLDR data, the format is normalized so that the other
+        # characteristics are preserved, just for readability.
         ';'
         :my $*negative = True;
         {%*d := %*data<negative>}
@@ -117,15 +125,16 @@ token pattern-element:number {
     | '@' <.significant-digit>  [',' <.integer-grouping> ]?
     | <integral-digit>          [',' <.integer-grouping> ]?
     ]+
-
-    '.'                # obligatory decimal
     <.handle-grouping>
 
-    [ # Optional fractional parts, cannot be composed entirely of commas.
-    | '#' <.dummy-digit>       [',' <.fractional-grouping> ]?
-    | '@' <.significant-digit> [',' <.fractional-grouping> ]?
-    | <fractional-digit>       [',' <.fractional-grouping> ]?
-    ]*
+    [
+        '.' # Decimal is optional
+        [ # Optional fractional parts, cannot be composed entirely of commas.
+        | '#' <.dummy-digit>       [',' <.fractional-grouping> ]?
+        | '@' <.significant-digit> [',' <.fractional-grouping> ]?
+        | <fractional-digit>       [',' <.fractional-grouping> ]?
+        ]*
+    ]?
 
     [
         'E' # if exponential
