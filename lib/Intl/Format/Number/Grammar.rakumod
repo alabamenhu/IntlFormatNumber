@@ -14,46 +14,30 @@ unit grammar Grammar;
 token TOP {
     :my %*data =
         negative-type => 'simple',
-        positive => %(
-            type                       => '',
-            minimum-integer-digits     => 0,
-            minimum-fractional-digits  => 0,
-            minimum-exponential-digits => 0,
-            minimum-significant-digits => 0,
-#           maximum-integer-digits     => ∞, (not definable in patterns)
-#           maximum-fractional-digits  => ∞, (not definable in patterns)
-            maximum-significant-digits => 0,
-            primary-grouping-size      => 0,
-            secondary-grouping-size    => 0,
-            fractional-grouping-size   => 0,
-            exponential-power-multiple => 0,
-            exponential-forces-sign    => False,
-            rounding-value             => 0,
-            prefix                     => [],
-            suffix                     => [],
-            padding-type               => '',
-            padding-char               => '',
-        ),
-        negative => %(
-            type                       => '',
-            minimum-integer-digits     => 0,
-            minimum-fractional-digits  => 0,
-            minimum-exponential-digits => 0,
-            minimum-significant-digits => 0,
-#           maximum-integer-digits     => ∞, (not definable in patterns)
-#           maximum-fractional-digits  => ∞, (not definable in patterns)
-            maximum-significant-digits => 0,
-            primary-grouping-size      => 0,
-            secondary-grouping-size    => 0,
-            fractional-grouping-size   => 0,
-            exponential-power-multiple => 0,
-            exponential-forces-sign    => False,
-            rounding-value             => 0,
-            prefix                     => [],
-            suffix                     => [],
-            padding-type               => '',
-            padding-char               => '',
-        ),
+        type                       => 'decimal',
+        minimum-integer-digits     => 0,
+        maximum-integer-digits     => ∞, # (not definable in patterns, but makes things easier for formatters)
+        minimum-fractional-digits  => 0,
+        maximum-fractional-digits  => ∞, # (not definable in patterns, but makes things easier for formatters)
+        minimum-significant-digits => 0,
+        maximum-significant-digits => 0,
+        minimum-exponential-digits => 0,
+        primary-grouping-size      => 0,
+        secondary-grouping-size    => 0,
+        fractional-grouping-size   => 0,
+        exponential-power-multiple => 0,
+        exponential-forces-sign    => False,
+        rounding-value             => 0,
+        # Negative format values
+        negative-prefix            => [],
+        negative-suffix            => [],
+        negative-padding-type      => '',
+        negative-padding-char      => '',
+        # Positive format values
+        positive-prefix            => [],
+        positive-suffix            => [],
+        positive-padding-type      => '',
+        positive-padding-char      => '',
     ;
     <patterns>
     { make %*data }
@@ -62,7 +46,6 @@ token TOP {
 # If only one token is given, the negative is identical to the positive,
 # but with a minus directly in front of the number
 token patterns {
-    :my %*d := %*data<positive>;
     $<positive>=<pattern>
     [
         # TODO: Per TR 35, no need to fully parse the negative pattern, just its prefix/suffix
@@ -75,7 +58,6 @@ token patterns {
         # characteristics are preserved, just for readability.
         ';'
         :my $*negative = True;
-        {%*d := %*data<negative>}
         $<negative>=<pattern>
     ]?
 }
@@ -83,7 +65,7 @@ token patterns {
 # The pattern will be taken in as a sequence of elements
 # Each element has unambiguous start values, which allows this
 token pattern {
-    :my @*fix := %*d<prefix>;
+    :my @*fix := $*negative ?? %*data<negative-prefix> !! %*data<positive-prefix>;
     <padding('start')>?
     <pattern-element>+
     <padding('end')>?
@@ -102,54 +84,83 @@ token pattern-element:currency     { '¤'+                  { @*fix.push: %( typ
 # If there's a negative element, then it has the possibility to use only a single dummy digit.
 # In this case, it's interpreted as repeating the numerical data from the positive, just with
 # a different prefix and suffix.  This generates the negative type of 'circumfix'
-token pattern-element:negative     {
-    <?{$*negative}>                           # check we're in negative pattern
-    '#'
-    <before <-[0..9@#,]>>                     # ensure we're not in a regular pattern before...
-    { %*data<negative-type> = 'circumfix' }   # setting the negative type
-}
+#token pattern-element:negative     {
+#    <?{$*negative}>                           # check we're in negative pattern
+#    '#'
+#    <before <-[0..9@#,]>>                     # ensure we're not in a regular pattern before...
+#    { %*data<negative-type> = 'circumfix' }   # setting the negative type
+#}
 
 
 token pattern-element:number {
     # Padding is allowed either at the beginning or end of the number pattern
     <padding('before')>?
 
-    # Set up variables (final grouping values calculated later)
-    :my @*grouping;
-    :my $*grouping = 0;
-    :my $*fractional-multiplier = 0.1;
+    # With negative numbers, we don't care about the actual values
+    # and can just skip this part entirely
+    [ <?{$*negative}> <[@#0..9]>+ ['.' <[@#0..9]>*]? [E '+'?<[0..9]>+]?
+    | # or else, we do the positive pattern, which is the real workhorse
 
-    # Integer parts.
-    [
-    | '#' <.dummy-digit>        [',' <.integer-grouping> ]?
-    | '@' <.significant-digit>  [',' <.integer-grouping> ]?
-    | <integral-digit>          [',' <.integer-grouping> ]?
-    ]+
-    <.handle-grouping>
+        # Set up variables (final grouping values calculated later)
+        :my @*grouping;
+        :my $*grouping = 0;
+        :my $*fractional-multiplier = 0.1;
 
-    [
-        '.' # Decimal is optional
-        [ # Optional fractional parts, cannot be composed entirely of commas.
-        | '#' <.dummy-digit>       [',' <.fractional-grouping> ]?
-        | '@' <.significant-digit> [',' <.fractional-grouping> ]?
-        | <fractional-digit>       [',' <.fractional-grouping> ]?
-        ]*
-    ]?
+        # Integer parts.
+        [
+        | '#' <.dummy-digit>        [',' <.integer-grouping> ]?
+        | '@' <.significant-digit>  [',' <.integer-grouping> ]?
+        | <integral-digit>          [',' <.integer-grouping> ]?
+        ]+
+        <.handle-grouping>
 
-    [
-        'E' # if exponential
-        <exponential-plus>?
-        <exponential-digit>+
-    ]?
+        [
+            '.' # Decimal is optional
+            [ # Optional fractional parts, cannot be composed entirely of commas.
+            | '#' <.dummy-digit>       [',' <.fractional-grouping> ]?
+            | '@' <.significant-digit> [',' <.fractional-grouping> ]?
+            | <fractional-digit>       [',' <.fractional-grouping> ]?
+            ]*
+        ]?
 
-    # Tidy up:
-    # Padding is allowed either at the beginning or end of the number pattern
-    # Pattern elements will also now affix to the suffix portion rather than prefix
-    # If we reached here in a negative pattern, then we have a fully unique pattern
-    <padding('after')>?
-    { @*fix := %*d<suffix> }
-    { %*data<negative-type> = 'unique' if $*negative }
+        [
+            'E' # if exponential
+            <exponential-plus>?
+            <exponential-digit>+
+            {
+                %*data<type> = 'scientific';
+                # Here we need to readjust based on what we've seen.
+                # The MAXIMUM significant digits is defined as (per TR 35 § 3.4)
+                #   If the mantissa pattern contains a period:
+                #       ?? If the mantissa pattern contains at least one 0:
+                #           ?? Return the number of 0s before the period added to the number of #s or 0s after the period
+                #           !! Return 1 plus the number of #s after the period
+                #       !! If the mantissa pattern contains at least one 0:
+                #           ?? Return the number of 0s.
+                #           !! Return positive infinity.
+                # The approach used below feels hacky, but I'm not sure a cleaner approach since exponentials are
+                # treated as if significant digits, and I don't want to add another variable with necessary flags,
+                # etc, (please submit a PR if you know!). Also, this is not complete, as per TR 35 § 3.5, TODO:
+                #   Significant digits may be used together with exponential notation.
+                #   Such patterns are equivalent to a normal exponential pattern with
+                #   a minimum and maximum integer digit count of one, a minimum fraction
+                #   digit count of Minimum Significant Digits - 1, and a maximum fraction
+                #   digit count of Maximum Significant Digits - 1. For example, the
+                #   pattern "@@###E0" is equivalent to "0.0###E0".
+                %*data<maximum-significant-digits> =
+                    $*grouping # This will be < 0 if any fractional digits
+                        ?? (%*data<minimum-integer-digits> max 1) + $*grouping
+                        !! (%*data<minimum-integer-digits> max Inf)
+            }
 
+        ]?
+
+        # Tidy up:
+        # Padding is allowed either at the beginning or end of the number pattern
+        # Pattern elements will also now affix to the suffix portion rather than prefix
+        <padding('after')>?
+        { @*fix := $*negative ?? %*data<negative-suffix> !! %*data<positive-suffix> }
+    ] # close off the positive pattern
 }
 method dummy-digit {
     # The dummy digit normally has no meaning except to provide
@@ -159,8 +170,8 @@ method dummy-digit {
     # unless significant digits are used, in which case dummy digits
     # before the significant digit are ignored, and after it (hence
     # the conditional check) are included for the maximum significant digits.
-    %*d<exponential-power-multiple>++;
-    %*d<maximum-significant-digits>++ if %*d<minimum-significant-digits>;
+    %*data<exponential-power-multiple>++;
+    %*data<maximum-significant-digits>++ if %*data<minimum-significant-digits>;
     $*grouping++;
     self
 }
@@ -171,8 +182,8 @@ method significant-digit {
     # digit count of Minimum Significant Digits - 1, and a maximum fraction
     # digit count of Maximum Significant Digits - 1. For example, the pattern
     # "@@###E0" is equivalent to "0.0###E0".
-    %*d<minimum-significant-digits>++;
-    %*d<maximum-significant-digits>++;
+    %*data<minimum-significant-digits>++;
+    %*data<maximum-significant-digits>++;
     self
 }
 method integer-grouping {
@@ -192,23 +203,23 @@ method handle-grouping {
     $*grouping = 0;
 
     if @*grouping > 2 {
-        (%*d<secondary-grouping-size>, %*d<primary-grouping-size>) = @*grouping.tail(2);
+        (%*data<secondary-grouping-size>, %*data<primary-grouping-size>) = @*grouping.tail(2);
     } elsif @*grouping == 2 {
-        %*d<primary-grouping-size>   = @*grouping.tail;
-        %*d<secondary-grouping-size> = @*grouping.tail;
+        %*data<primary-grouping-size>   = @*grouping.tail;
+        %*data<secondary-grouping-size> = @*grouping.tail;
     }
     self;
 }
 method handle-integral-digit($digit) {
-    %*d<rounding-value> = %*d<rounding-value> * 10 + $digit;
-    %*d<minimum-integer-digits>++;
+    %*data<rounding-value> = %*data<rounding-value> * 10 + $digit;
+    %*data<minimum-integer-digits>++;
     $*grouping++;
     self
 }
 method handle-fractional-digit($digit) {
-    %*d<rounding-value> = %*d<rounding-value> + $*fractional-multiplier * $digit;
+    %*data<rounding-value> = %*data<rounding-value> + $*fractional-multiplier * $digit;
     $*fractional-multiplier /= 10;
-    %*d<minimum-fractional-digits>++;
+    %*data<minimum-fractional-digits>++;
     $*grouping++;
     self
 }
@@ -216,7 +227,7 @@ method fractional-grouping {
     # In the (odd) event that someone uses two fractional groupers, the standard doesn't say
     # how they should be treated.  I'm going to assume that they should be treated in the
     # same way as integral: only the trailing one will be counted.
-    %*d<fractional-grouping-size> = $*grouping;
+    %*data<fractional-grouping-size> = $*grouping;
     $*grouping = 0;
     self;
 }
@@ -224,8 +235,13 @@ method fractional-grouping {
 token padding($position){
     '*' <(.
     {
-        %*d<padding-char> = $/.Str;
-        %*d<padding-type> = $position;
+        if $*negative {
+            %*data<negative-padding-char> = $/.Str;
+            %*data<negative-padding-type> = $position;
+        } else {
+            %*data<positive-padding-char> = $/.Str;
+            %*data<positive-padding-type> = $position;
+        }
     }
 }
 # the docs say the pad character can be anything, and that
@@ -234,7 +250,7 @@ token padding($position){
 # see http://unicode.org/reports/tr35/tr35-numbers.html#Padding
 # Plus the formal definition excludes higher plane stuff which seems silly
 
-token integral-digit    { <[0..9]> { } <.handle-integral-digit(  $/.Str.Int)> }
-token fractional-digit  { <[0..9]> { } <.handle-fractional-digit($/.Str.Int)> }
-token exponential-digit { <[0..9]> {     %*d<minimum-exponential-digits>++  } }
-token exponential-plus  {   '+'    {     %*d<exponential-forces-sign> = True} }
+token integral-digit    { <[0..9]> { } <.handle-integral-digit(  $/.Str.Int)>    }
+token fractional-digit  { <[0..9]> { } <.handle-fractional-digit($/.Str.Int)>    }
+token exponential-digit { <[0..9]> {     %*data<minimum-exponential-digits>++  } }
+token exponential-plus  {   '+'    {     %*data<exponential-forces-sign> = True} }
