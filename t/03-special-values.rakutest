@@ -1,28 +1,27 @@
 use v6.d;
 use Test;
-use Intl::Format::Number :ast;
-use experimental :rakuast;
+use Intl::Format::Number;
 use MONKEY-SEE-NO-EVAL;
 
 # Most languages use the exact same values as English, but a handful
 # use specialized values.  Here we check that they match what's in CLDR.
 
 subtest {
-    my &format = EVAL format-number-rakuast('en','decimal','standard');
+    my &format = local-number-formatter(:language<en>, :type<decimal>, :length<standard>);
     is format(NaN), 'NaN', 'Not a number';
     is format(Inf), '∞', 'Infinity';
     is format(-Inf), '-∞', 'Negative Infinity';
 }, 'English';
 
 subtest {
-    my &format = EVAL format-number-rakuast('ar','decimal','standard');
+    my &format = local-number-formatter(:language<ar>, :type<decimal>, :length<standard>);
     is format(NaN), 'ليس رقم', 'Not a number';
     is format(Inf), '∞', 'Infinity';
     is format(-Inf), '؜-∞', 'Negative Infinity';
 }, 'Arabic';
 
 subtest {
-    my &format = EVAL format-number-rakuast('ru','decimal','standard');
+    my &format = local-number-formatter(:language<ru>, :type<decimal>, :length<standard>);
     is format(NaN), 'не число', 'Not a number';
     is format(Inf), '∞', 'Infinity';
     is format(-Inf), '-∞', 'Negative Infinity';
