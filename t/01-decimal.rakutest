@@ -32,7 +32,7 @@ is format-number(-1234567890, :language<en>), '-1,234,567,890';
 is format-number(-1234567890, :language<es>), '-1.234.567.890';
 is format-number(-1234567890, :language<ar>), '؜-١٬٢٣٤٬٥٦٧٬٨٩٠';
 is format-number(-1234567890, :language<hi>), '-1,23,45,67,890';
-is format-number(-1234567890, :language<fi>), '−1 234 567 890'; # Finish - is U+2212
+is format-number(-1234567890, :language<fi>), '−1 234 567 890'; # Finish - is U+2212, delimiter is NBSP
 
 # Default format, with fractional components
 is format-number(-1.23456789, :language<en>), '-1.23456789';
