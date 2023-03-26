@@ -1,7 +1,7 @@
 {
   "name": "Intl::Format::Number",
   "description": "A module for formatting numbers in a localized manner",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "perl": "6.*",
   "authors": [
     "Matthew Stephen Stuckwisch"
@@ -9,8 +9,8 @@
   "auth": "zef:guifa",
   "depends": [
     "Intl::CLDR:auth<zef:guifa>:ver<0.7.2+>",
-    "User::Language:auth<zef:guifa>:ver<0.3.1+>",
-    "Intl::LanguageTag:auth<zef:guifa>:ver<0.12.1+>"
+    "User::Language:auth<zef:guifa>:ver<0.5.1+>",
+    "Intl::LanguageTag:auth<zef:guifa>:ver<0.12.3+>"
   ],
   "build-depends": [],
   "test-depends": [
@@ -19,9 +19,7 @@
   "provides": {
     "Intl::Format::Number": "lib/Intl/Format/Number.rakumod",
     "Intl::Format::Number::Actions": "lib/Intl/Format/Number/Actions.rakumod",
-    "Intl::Format::Number::Grammar": "lib/Intl/Format/Number/Grammar.rakumod",
-    "Intl::Format::NumberOld": "lib/Intl/Format/NumberOld.pm6",
-    "Intl::Format::Util::Digits": "lib/Intl/Format/Util/Digits.pm6"
+    "Intl::Format::Number::Grammar": "lib/Intl/Format/Number/Grammar.rakumod"
   },
   "resources": [],
   "license": "Artistic-2.0",
