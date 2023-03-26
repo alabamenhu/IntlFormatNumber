@@ -1,0 +1,4 @@
+use Test;
+use Intl::Format::Number;
+ok True;
+get-number-formatter

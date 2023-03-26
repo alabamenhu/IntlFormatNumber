@@ -1,0 +1,8 @@
+use v6.d;
+use Test;
+use Intl::Format::Number;
+
+is format-number(123456.789, :language<en>), '123,456.789', 'All-in-one format number';
+is number-formatter('#,##0.#').(123456.789), '123,456.789', 'Manual number formatter';
+is local-number-formatter(:language<en>).(123456.789), '123,456.789', 'Localized number formatter';
+done-testing;
